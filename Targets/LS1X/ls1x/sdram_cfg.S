@@ -1,5 +1,22 @@
 //#define	SD_FREQ	(6 * PLL_M) / (2 * SDRAM_PARAM_DIV_NUM)
 #define	SD_FREQ	(((APB_CLK / 4) * (PLL_MULT / CPU_DIV)) / SDRAM_PARAM_DIV_NUM)
+
+/*
+    以型号为EM63A165TS的SDRAM为例，
+    物理参数为，
+    容量：32MB
+    行宽：13位，即2的13次方，即8K
+    列宽：9位，即2的9次方，即512
+    位宽：16位
+
+    所以，
+    颗粒的行数=ROW_8K
+    颗粒的列数=COL_512
+    颗粒的位宽=WIDTH_16
+
+    再结合宏SD_PARA0和芯片手册中寄存器SD_CONFIG，相信一看就能明白
+ */
+ 
 /* 颗粒行数 */
 #define	ROW_1K		0x7
 #define	ROW_2K		0x0

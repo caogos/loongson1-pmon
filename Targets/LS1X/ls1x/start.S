@@ -638,18 +638,29 @@ cpu_win_fixup:
 #if !defined(NAND_BOOT_EN)
 #include "sdram_cfg.S"
 
-	li  	t1, 0xbfd00410
+    /* 
+       手册建议，先写寄存器SD_CONFIG[31:0]，然后再写寄存器的SD_CONFIG[63:32]，
+       即先写低32位，再写高32位。
+       写三次寄存器，最后一次将最高位置一，即使能
+    */
+
+    // 写第一次
+	li  	t1, 0xbfd00410      // 寄存器SD_CONFIG[31:0]的地址为0xbfd00410
+	li		a1, SD_PARA0        // 宏SD_PARA0在sdram_cfg.S中定义的
+	sw		a1, 0x0(t1)         // 将宏SD_PARA0的值写入寄存器SD_CONFIG[31:0]
+	li		a1, SD_PARA1
+	sw		a1, 0x4(t1)         // 同理，将宏SD_PARA1的值写入寄存器SD_CONFIG[63:32]
+
+	// 写第二次
 	li		a1, SD_PARA0
 	sw		a1, 0x0(t1)
 	li		a1, SD_PARA1
 	sw		a1, 0x4(t1)
+
+    // 写第三次	
 	li		a1, SD_PARA0
 	sw		a1, 0x0(t1)
-	li		a1, SD_PARA1
-	sw		a1, 0x4(t1)
-	li		a1, SD_PARA0
-	sw		a1, 0x0(t1)
-	li		a1, SD_PARA1_EN
+	li		a1, SD_PARA1_EN     // 使能
 	sw		a1, 0x4(t1)
 //	DELAY(100)
 #endif
