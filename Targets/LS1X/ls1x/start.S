@@ -122,23 +122,33 @@
 	.globl	__main
 _start:
 start:
+    /*
+    设置栈指针为start地址之前0x4000的位置
+    mips架构堆栈寄存器实际只是通用寄存器，并没有规定生长方向，但软件约定“堆栈指针向下生长”
+    */
 	.globl	stack
 stack = start - 0x4000		/* Place PMON stack below PMON start in RAM */
 
 /* NOTE!! Not more that 16 instructions here!!! Right now it's FULL! */
-	mtc0	zero, COP_0_STATUS_REG
-	mtc0	zero, COP_0_CAUSE_REG
+	mtc0	zero, COP_0_STATUS_REG  // 清零cp0 status寄存器
+	mtc0	zero, COP_0_CAUSE_REG   // 清零cp0 cause寄存器
+
+    /*
+    设置启动异常向量入口地址为ROM地址(0xbfc00000)
+    将寄存器cp0 status的BEV置1，使CPU采用ROM(kseg1)空间的异常入口点
+    */
 	li	t0, SR_BOOT_EXC_VEC	/* Exception to Boostrap Location */
 	mtc0	t0, COP_0_STATUS_REG
-	la	sp, stack
-	la	gp, _gp
+	
+	la	sp, stack       // 加载栈地址
+	la	gp, _gp         // 加载全局指针gp
 
 	/* initialize spi */
-	li  t0, 0xbfe80000
-	li  t1, 0x17	// div 4, fast_read + burst_en + memory_en double I/O 模式 部分SPI flash可能不支持
-	sb  t1, 0x4(t0)	// sfc_param
+	li  t0, 0xbfe80000      //地址0xbfe80000为SPI0的寄存器基地址
+	li  t1, 0x17	        // div 4, fast_read + burst_en + memory_en double I/O 模式 部分SPI flash可能不支持
+	sb  t1, 0x4(t0)	        // 设置寄存器sfc_param
 	li  t1, 0x05
-	sb  t1, 0x6(t0)
+	sb  t1, 0x6(t0)         // 设置寄存器sfc_timing
 
 	/* 设置sdram cs1复用关系，开发板使用ejtag_sel gpio_0引脚(第五复用)作为第二片sdram的片选
 	  注意sw2拨码开关的设置，使用ejtag烧录pmon时需要调整拨码开关，烧录完再调整回来 */
